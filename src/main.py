@@ -1,7 +1,5 @@
 from preprocess import PreProcessor, IMAGE_SIZE
 from model import CNN
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 DATASET_TRAINING_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/example_ad_dataset/train"
 DATASET_TEST_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/example_ad_dataset/test"

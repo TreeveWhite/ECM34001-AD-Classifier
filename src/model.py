@@ -12,11 +12,9 @@ def exponential_decay(lr0, s):
 
 
 class CNN:
-
     def __init__(self, image_size, num_classes) -> None:
         self.image_size = image_size
         self.num_classes = num_classes
-
         self.build()
 
     def build(self):
@@ -52,8 +50,7 @@ class CNN:
                 filters, 3, activation='relu', padding='same'),
             tf.keras.layers.BatchNormalization(),
             tf.keras.layers.MaxPool2D()
-        ]
-        )
+        ])
 
     def __dense_block(self, units, dropout_rate):
         return tf.keras.Sequential([
