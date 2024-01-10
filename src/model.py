@@ -1,6 +1,7 @@
 import datetime
 import tensorflow as tf
 import keras
+import tensorflow_addons as tfa
 
 STRATEGY = tf.distribute.get_strategy()
 EPOCHS = 10
@@ -21,9 +22,28 @@ class CNN:
         self.model_save_path = model_save_path
 
         if not load_model_path:
-            self.build()
+            self.build_densNet201()
         else:
             self.model = keras.models.load_model(load_model_path)
+
+    def build_densNet201(self):
+        base_model = tf.keras.applications.DenseNet201(
+            include_top=False, weights='imagenet', input_shape=(*self.image_size, 3))
+
+        for layer in base_model.layers:
+            layer.trainable = False
+
+        model = keras.models.Sequential([
+            base_model,
+            keras.layers.GlobalAveragePooling2D(),
+            tfa.layers.WeightNormalization(
+                keras.layers.Dense(256, activation='relu')),
+            keras.layers.Dropout(0.5),
+            tfa.layers.WeightNormalization(keras.layers.Dense(
+                self.num_classes, activation='softmax'))
+        ])
+
+        self.model = model
 
     def build(self):
         self.model = keras.Sequential([
@@ -39,7 +59,7 @@ class CNN:
             keras.layers.Dense(self.num_classes, activation='softmax')
         ])
 
-    def compile(self, metrics=[keras.metrics.AUC(name='auc')]):
+    def compile(self, metrics=[keras.metrics.Accuracy(name='acc')]):
         with STRATEGY.scope():
             self.model.compile(
                 optimizer='adam',
