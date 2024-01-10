@@ -16,8 +16,9 @@ if __name__ == "__main__":
 
     model = CNN(IMAGE_SIZE, len(CLASS_NAMES))
 
+    print("COMPILING...")
     model.compile()
-
+    print("TRAINING...")
     model.train(preProcess.train_ds, preProcess.val_ds)
-
+    print("TESTING...")
     model.test(preProcess.test_ds)

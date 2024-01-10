@@ -1,4 +1,5 @@
 import tensorflow as tf
+from keras.preprocessing import image_dataset_from_directory
 
 STRATEGY = tf.distribute.get_strategy()
 AUTOTUNE = tf.data.experimental.AUTOTUNE
@@ -17,7 +18,7 @@ class PreProcessor:
         self.encode_dataset()
 
     def load_dataset(self):
-        self.train_ds = tf.keras.preprocessing.image_dataset_from_directory(
+        self.train_ds = image_dataset_from_directory(
             self.ds_training_path,
             validation_split=0.2,
             subset="training",
@@ -26,7 +27,7 @@ class PreProcessor:
             batch_size=BATCH_SIZE,
         )
 
-        self.val_ds = tf.keras.preprocessing.image_dataset_from_directory(
+        self.val_ds = image_dataset_from_directory(
             self.ds_training_path,
             validation_split=0.2,
             subset="validation",
@@ -35,7 +36,7 @@ class PreProcessor:
             batch_size=BATCH_SIZE,
         )
 
-        self.test_ds = tf.keras.preprocessing.image_dataset_from_directory(
+        self.test_ds = image_dataset_from_directory(
             self.ds_test_path,
             image_size=IMAGE_SIZE,
             batch_size=BATCH_SIZE,

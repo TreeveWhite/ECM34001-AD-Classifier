@@ -1,8 +1,7 @@
-import numpy as np
 import tensorflow as tf
 
 
-MODELS_PATH = "/home/white/uni_workspace/ecm3401-dissertation/ECM34001-AD-Classifier/models/alzheimer_model.h5"
+MODELS_PATH = "/home/white/uni_workspace/ecm3401-dissertation/ECM34001-AD-Classifier/models/AD_Model_2024-01-10 11:37:44.993427.h5"
 
 
 def preprocess_input(image_path, target_size=[176, 208]):
@@ -21,10 +20,8 @@ def nicify_prediction(prediction):
 
 if __name__ == "__main__":
     loaded_model = tf.keras.models.load_model(MODELS_PATH)
+    loaded_model.summary()
+
     image_path = "/home/white/uni_workspace/ecm3401-dissertation/data/example_ad_dataset/test/ModerateDemented/27.jpg"
 
     preprocessed_image = preprocess_input(image_path)
-
-    pred = loaded_model.predict(preprocessed_image)
-
-    print(nicify_prediction(pred))
