@@ -4,7 +4,7 @@ import keras
 import tensorflow_addons as tfa
 
 STRATEGY = tf.distribute.get_strategy()
-EPOCHS = 10
+EPOCHS = 1
 MODELS_BASE_PATH = "/home/white/uni_workspace/ecm3401-dissertation/ECM34001-AD-Classifier/models/"
 MODEL_SAVE_PATH = MODELS_BASE_PATH+f"AD_Model_{datetime.datetime.now()}.h5"
 
@@ -22,7 +22,7 @@ class CNN:
         self.model_save_path = model_save_path
 
         if not load_model_path:
-            self.build_densNet201()
+            self.build()
         else:
             self.model = keras.models.load_model(load_model_path)
 
