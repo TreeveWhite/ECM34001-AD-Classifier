@@ -4,12 +4,14 @@ from matplotlib import pyplot as plt
 from matplotlib.image import imsave
 import pydicom as dicom
 import numpy as np
+import imutils
 import pandas as pd
 
-DATASET_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI"
-DATASET_METADATA_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/MPRAGE__CN_MCI_pMCI_AD__1_20_2024.csv"
-RESULTS_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI_POST_PROCESS"
+ADNI_DATASET_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI"
+METADATA_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/MPRAGE__CN_MCI_pMCI_AD__1_20_2024.csv"
 
+DATA_RESULTS_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI_POST_PROCESS_3D"
+SLICE_RESULTS_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI_POST_PROCESS_SLICE"
 
 IMAGE_SIZE = [500, 500]
 
@@ -39,7 +41,7 @@ def filter_order_slices(slices):
     return sorted(resp, key=lambda s: s.SliceLocation)
 
 
-def ShowImage(title, img, ctype, show=False):
+def show_image(title, img, ctype, show=False):
     if show:
         plt.figure(figsize=(10, 10))
         if ctype == 'bgr':
@@ -61,7 +63,7 @@ def ShowImage(title, img, ctype, show=False):
 
 
 def extract_brain(img_slice):
-    # apply Otsu's automatic thresholding
+    # Apply Otsu's automatic thresholding
     ret, thresh = cv2.threshold(
         img_slice, 0, 255, cv2.THRESH_OTSU)
 
@@ -77,64 +79,87 @@ def extract_brain(img_slice):
 
     brain_out[brain_mask == False] = 0
 
+    # img_denoised = cv2.GaussianBlur(brain_out, (3, 3), 0)
+
     return brain_out
 
 
-if __name__ == "__main__":
+def make_classes_folders(parent_dir, classes):
+    for _class in classes:
+        group_path = os.path.join(
+            parent_dir, _class)
+        os.makedirs(group_path, exist_ok=True)
 
-    os.makedirs(RESULTS_PATH, exist_ok=True)
 
-    metadata = load_metadata(DATASET_METADATA_PATH)
+def sagittal_to_3dimg(metadata, dataset_path, results_path):
+    # Create new folders in Results Path for the Classes
+    make_classes_folders(results_path, metadata["Group"].unique())
 
-    for root, dirs, files in os.walk(DATASET_PATH):
-        current_folder = os.path.basename(root)
-        if current_folder in metadata.index:
-            group_path = os.path.join(
-                RESULTS_PATH, metadata.at[current_folder, "Group"])
-            os.makedirs(group_path, exist_ok=True)
+    for root, _, files in os.walk(dataset_path):
+        image_id = os.path.basename(root)
+        if image_id in metadata.index:
+            class_results_path = os.path.join(
+                results_path, metadata.at[image_id, "Group"])
+
             satigal_slices = filter_order_slices(
                 load_dicom_series([os.path.join(root, file) for file in files if file.endswith('.dcm')]))
-
-            ps = satigal_slices[0].PixelSpacing
-            ss = satigal_slices[0].SliceThickness
-            ax_aspect = ps[1] / ps[0]
 
             img_shape = list(satigal_slices[0].pixel_array.shape)
             img_shape.append(len(satigal_slices))
             img3d = np.zeros(img_shape)
-
             for i, s in enumerate(satigal_slices):
                 img2d = s.pixel_array
                 img3d[:, :, i] = img2d
 
-            save_path = os.path.join(group_path, current_folder)
+            save_path = os.path.join(class_results_path, image_id)
             np.save(f"{save_path}.npy", img3d)
+
+
+def npy_to_slice(metadata, data_path, results_path):
+    # Create new folders in Results Path for the Classes
+    classes = metadata["Group"].unique()
+    make_classes_folders(results_path, classes)
+
+    for root, _, files in os.walk(data_path):
+        class_name = os.path.basename(root)
+        if class_name not in classes:
+            continue
+        npy_files = [file for file in files if file.endswith(".npy")]
+        for npy_file in npy_files:
+            save_path = os.path.join(os.path.join(
+                results_path, class_name), f"{npy_file.split('.')[0]}.png")
+
+            img3d = np.load(os.path.join(root, npy_file))
 
             slice_indices = range(100, 105)
 
             for i, index in enumerate(slice_indices):
                 img_slice = img3d[index, :, :].T
 
-                ShowImage(
-                    f"Pre Prepropressing Axial Slice {i}", img_slice, "grey")
+                imsave(f"{save_path}-{i}-original.png",
+                       img_slice, cmap="grey")
 
-                img_normalized = cv2.normalize(img_slice, None, 0, 1.0,
-                                               cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-
+                # Normalise
                 img_slice_uint8 = img_slice.astype("uint8")
-
-                ShowImage(
-                    f"Normalised Axial Slice {i}", img_slice_uint8, "grey")
-
+                # Skull Extraction & Guassian Denoise
                 brain_out = extract_brain(img_slice_uint8)
-
-                ShowImage(f"Brain Out Slice {i}", brain_out, 'grey')
-
-                resized_brain_out = cv2.resize(
-                    brain_out, IMAGE_SIZE, interpolation=cv2.INTER_AREA)
-
-                ShowImage(
-                    f"Resized Brain Out Slice {i}", resized_brain_out, 'grey')
+                # Resize (Aspect ratio Aware)
+                resized_brain_out = imutils.resize(
+                    brain_out, width=IMAGE_SIZE[0])
 
                 imsave(f"{save_path}-{i}.png",
                        resized_brain_out, cmap="grey")
+
+
+if __name__ == "__main__":
+
+    os.makedirs(DATA_RESULTS_PATH, exist_ok=True)
+    os.makedirs(SLICE_RESULTS_PATH, exist_ok=True)
+
+    metadata = load_metadata(METADATA_PATH)
+
+    sagittal_to_3dimg(metadata, dataset_path=ADNI_DATASET_PATH,
+                      results_path=DATA_RESULTS_PATH)
+
+    npy_to_slice(metadata, data_path=DATA_RESULTS_PATH,
+                 results_path=SLICE_RESULTS_PATH)
