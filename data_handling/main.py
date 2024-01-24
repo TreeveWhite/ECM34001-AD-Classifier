@@ -41,7 +41,7 @@ def filter_order_slices(slices):
     return sorted(resp, key=lambda s: s.SliceLocation)
 
 
-def show_image(title, img, ctype, show=False):
+def show_image(title, img, ctype, show=True):
     if show:
         plt.figure(figsize=(10, 10))
         if ctype == 'bgr':
@@ -60,28 +60,6 @@ def show_image(title, img, ctype, show=False):
         plt.axis('off')
         plt.title(title)
         plt.show()
-
-
-def extract_brain(img_slice):
-    # Apply Otsu's automatic thresholding
-    ret, thresh = cv2.threshold(
-        img_slice, 0, 255, cv2.THRESH_OTSU)
-
-    ret, markers = cv2.connectedComponents(thresh)
-
-    marker_area = [np.sum(markers == m)
-                   for m in range(np.max(markers)) if m != 0]
-
-    largest_component = np.argmax(marker_area)+1
-    brain_mask = markers == largest_component
-
-    brain_out = img_slice.copy()
-
-    brain_out[brain_mask == False] = 0
-
-    # img_denoised = cv2.GaussianBlur(brain_out, (3, 3), 0)
-
-    return brain_out
 
 
 def make_classes_folders(parent_dir, classes):
@@ -115,6 +93,29 @@ def sagittal_to_3dimg(metadata, dataset_path, results_path):
             np.save(f"{save_path}.npy", img3d)
 
 
+def extract_brain(img_slice, denoise=True):
+    # Apply Otsu's automatic thresholding
+    ret, thresh = cv2.threshold(
+        img_slice, 0, 255, cv2.THRESH_OTSU)
+
+    ret, markers = cv2.connectedComponents(thresh)
+
+    marker_area = [np.sum(markers == m)
+                   for m in range(np.max(markers)) if m != 0]
+
+    largest_component = np.argmax(marker_area)+1
+    brain_mask = markers == largest_component
+
+    brain_out = img_slice.copy()
+
+    brain_out[brain_mask == False] = 0
+
+    if denoise:
+        brain_out = cv2.GaussianBlur(brain_out, (3, 3), 0)
+
+    return brain_out
+
+
 def npy_to_slice(metadata, data_path, results_path):
     # Create new folders in Results Path for the Classes
     classes = metadata["Group"].unique()
@@ -131,24 +132,37 @@ def npy_to_slice(metadata, data_path, results_path):
 
             img3d = np.load(os.path.join(root, npy_file))
 
-            slice_indices = range(100, 105)
+            # 256 Axial Slices
+            slice_indices = [102]
 
             for i, index in enumerate(slice_indices):
-                img_slice = img3d[index, :, :].T
+                try:
+                    img_slice = img3d[index, :, :].T
 
-                imsave(f"{save_path}-{i}-original.png",
-                       img_slice, cmap="grey")
+                    show_image("Original", img_slice, "grey")
 
-                # Normalise
-                img_slice_uint8 = img_slice.astype("uint8")
-                # Skull Extraction & Guassian Denoise
-                brain_out = extract_brain(img_slice_uint8)
-                # Resize (Aspect ratio Aware)
-                resized_brain_out = imutils.resize(
-                    brain_out, width=IMAGE_SIZE[0])
+                    # Normalise
+                    img_slice_normalized = (
+                        img_slice - np.min(img_slice)) / (np.max(img_slice) - np.min(img_slice))
+                    # Convert to uint8
+                    img_slice_uint8 = (
+                        img_slice_normalized * 255).astype("uint8")
+                    show_image("Post Normalise", img_slice_uint8, "grey")
 
-                imsave(f"{save_path}-{i}.png",
-                       resized_brain_out, cmap="grey")
+                    # Skull Extraction & Guassian Denoise
+                    brain_out = extract_brain(img_slice_uint8)
+                    show_image("Skull Stripped", brain_out, "grey")
+
+                    # Resize (Aspect ratio Aware)
+                    resized_brain_out = imutils.resize(
+                        brain_out, width=IMAGE_SIZE[0])
+
+                    show_image("Resized", resized_brain_out, "grey")
+
+                    imsave(f"{save_path}-{i}.png",
+                           resized_brain_out, cmap="grey")
+                except:
+                    print(f"failed on slice {i}")
 
 
 if __name__ == "__main__":
@@ -158,8 +172,8 @@ if __name__ == "__main__":
 
     metadata = load_metadata(METADATA_PATH)
 
-    sagittal_to_3dimg(metadata, dataset_path=ADNI_DATASET_PATH,
-                      results_path=DATA_RESULTS_PATH)
+    # sagittal_to_3dimg(metadata, dataset_path=ADNI_DATASET_PATH,
+    #                   results_path=DATA_RESULTS_PATH)
 
     npy_to_slice(metadata, data_path=DATA_RESULTS_PATH,
                  results_path=SLICE_RESULTS_PATH)
