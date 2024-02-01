@@ -36,11 +36,10 @@ def filter_order_slices(slices):
         if hasattr(s, "SliceLocation"):
             resp.append(s)
         else:
-            skipcount += 1
+            skipcount = skipcount + 1
 
     if skipcount != 0:
         print("WARNING: Skiped Slices with no SliceLocation: {}".format(skipcount))
-
     return sorted(resp, key=lambda s: s.SliceLocation)
 
 
@@ -115,9 +114,11 @@ def dice_coefficient(gt_mask, pred_mask):
 def extract_brain(img_slice, denoise=True):
     # Apply Otsu's automatic thresholding
     ret, thresh = cv2.threshold(
-        img_slice, 0, 255, cv2.ADAPTIVE_THRESH_MEAN_C)
+        img_slice, 0, 255, cv2.THRESH_OTSU)
 
     ret, markers = cv2.connectedComponents(thresh)
+
+    print(ret)
 
     marker_area = [np.sum(markers == m)
                    for m in range(np.max(markers)) if m != 0]
@@ -176,13 +177,7 @@ def npy_to_slice(metadata, data_path, results_path, denoise, show):
                         img_slice_uint8, denoise)
                     show_image("Skull Stripped", brain_out, "grey", show)
 
-                    # Resize (Aspect ratio Aware)
-                    resized_brain_out = imutils.resize(
-                        brain_out, width=IMAGE_SIZE[0])
-
-                    show_image("Resized", resized_brain_out, "grey", show)
-
-                    # Quality Assure the Skull removal.
+                    # Quality Assure the Skull removal... THIS ONLY WORKS IF FIRST IMAGE IS CORRECT
                     use = True
                     if not (prev_slice is None):
                         extracted_brain_mask = (brain_out > 0).astype(np.uint8)
@@ -190,9 +185,14 @@ def npy_to_slice(metadata, data_path, results_path, denoise, show):
                             prev_slice, extracted_brain_mask)
                         if dice < 0.9:
                             print(
-                                f"WARNING: Skull Stripping Extected Fail: {npy_file.split('.')[0]}-{index}")
+                                f"WARNING: Skull Stripping Extected Fail - {index}")
                             use = False
-                            continue
+
+                    # Resize (Aspect ratio Aware)
+                    resized_brain_out = imutils.resize(
+                        brain_out, width=IMAGE_SIZE[0])
+
+                    show_image("Resized", resized_brain_out, "grey", show)
 
                     imsave(f"{save_path}-{index}.png",
                            resized_brain_out, cmap="grey")
