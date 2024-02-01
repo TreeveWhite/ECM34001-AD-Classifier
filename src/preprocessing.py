@@ -118,10 +118,8 @@ def extract_brain(img_slice, denoise=True):
 
     ret, markers = cv2.connectedComponents(thresh)
 
-    print(ret)
-
     marker_area = [np.sum(markers == m)
-                   for m in range(np.max(markers)) if m != 0]
+                   for m in range(np.max(markers)+1) if m != 0]
 
     largest_component = np.argmax(marker_area)+1
     brain_mask = markers == largest_component
@@ -155,7 +153,7 @@ def npy_to_slice(metadata, data_path, results_path, denoise, show):
 
             # Select Axial Slices
             slice_indices = range(
-                round(img3d.shape[0]*0.39), round(img3d.shape[0]*0.42))
+                round(img3d.shape[0]*0.39), round(img3d.shape[0]*0.41))
 
             prev_slice = None
             for index in slice_indices:
@@ -173,20 +171,22 @@ def npy_to_slice(metadata, data_path, results_path, denoise, show):
                     show_image("Post Normalise", img_slice_uint8, "grey", show)
 
                     # Skull Extraction & Guassian Denoise
-                    brain_out = extract_brain(
-                        img_slice_uint8, denoise)
+                    brain_out = extract_brain(extract_brain(
+                        img_slice_uint8, False), denoise)
                     show_image("Skull Stripped", brain_out, "grey", show)
 
                     # Quality Assure the Skull removal... THIS ONLY WORKS IF FIRST IMAGE IS CORRECT
-                    use = True
-                    if not (prev_slice is None):
-                        extracted_brain_mask = (brain_out > 0).astype(np.uint8)
-                        dice = dice_coefficient(
-                            prev_slice, extracted_brain_mask)
-                        if dice < 0.9:
-                            print(
-                                f"WARNING: Skull Stripping Extected Fail - {index}")
-                            use = False
+                    # use = True
+                    # if not (prev_slice is None):
+                    #     extracted_brain_mask = (brain_out > 0).astype(np.uint8)
+                    #     dice = dice_coefficient(
+                    #         prev_slice, extracted_brain_mask)
+                    #     if dice < 0.9:
+                    #         print(
+                    #             f"WARNING: Skull Stripping Extected Fail - {index}")
+                    #         use = False
+                    #         show_image("Failed", brain_out, "grey", True)
+                    #         continue
 
                     # Resize (Aspect ratio Aware)
                     resized_brain_out = imutils.resize(
@@ -197,7 +197,7 @@ def npy_to_slice(metadata, data_path, results_path, denoise, show):
                     imsave(f"{save_path}-{index}.png",
                            resized_brain_out, cmap="grey")
 
-                    prev_slice = brain_out if use else prev_slice
+                    # prev_slice = brain_out if use else prev_slice
 
                 except Exception as e:
                     print(f"failed on slice {index}: {e}")
