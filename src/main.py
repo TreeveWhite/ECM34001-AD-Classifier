@@ -6,25 +6,11 @@ import tensorflow_addons as tfa
 from config import IMAGE_SIZE, CLASS_NAMES
 
 STRATEGY = tf.distribute.get_strategy()
+AUTOTUNE = tf.data.AUTOTUNE
 
 DATASET_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI_POST_PROCESS_SLICE"
 BATCH_SIZE = 16 * STRATEGY.num_replicas_in_sync
 EPOCHS = 10
-
-
-class LayerOutputCallback(tf.keras.callbacks.Callback):
-    def on_epoch_end(self, epoch, logs=None):
-        # Fetch the model's input tensor
-        input_data = self.model.inputs[0].numpy()
-
-        # Get the output of each layer
-        for layer in self.model.layers:
-            layer_name = layer.name
-            layer_output = layer.output.numpy()
-
-            # Log images using TensorBoard
-            with tf.summary.create_file_writer(log_dir).as_default():
-                tf.summary.image(layer_name, layer_output, step=epoch)
 
 
 def convolutional_block(filters):
@@ -60,7 +46,7 @@ if __name__ == "__main__":
         validation_split=0.2,
         subset="training",
         seed=1337
-    )
+    ).prefetch(buffer_size=AUTOTUNE)
 
     validation_ds = image_dataset_from_directory(
         DATASET_PATH,
@@ -71,7 +57,7 @@ if __name__ == "__main__":
         validation_split=0.2,
         subset="validation",
         seed=1337
-    )
+    ).prefetch(buffer_size=AUTOTUNE)
 
     print(f"Recognised Classes: {train_ds.class_names}")
 
@@ -136,5 +122,5 @@ if __name__ == "__main__":
         validation_data=validation_ds,
         epochs=EPOCHS,
         callbacks=[tensorboard_callback, save_best,
-                   reduce_lr, LayerOutputCallback()]
+                   reduce_lr]
     )
