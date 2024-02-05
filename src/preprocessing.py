@@ -8,13 +8,7 @@ import numpy as np
 import imutils
 import pandas as pd
 
-from config import IMAGE_SIZE
-
-ADNI_DATASET_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI"
-METADATA_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/MPRAGE__CN_MCI_pMCI_AD__1_20_2024.csv"
-
-DATA_RESULTS_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI_POST_PROCESS_3D"
-SLICE_RESULTS_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI_POST_PROCESS_SLICE"
+from config import IMAGE_SIZE, ADNI_DATASET_PATH, METADATA_PATH, DATA_RESULTS_PATH, SLICE_RESULTS_PATH
 
 
 def load_metadata(csv_path, columns=["Subject", "Group"]):

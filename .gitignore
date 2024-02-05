@@ -1,4 +1,6 @@
 .venv/*
 */__pycache__/*
 *.h5
-*/logs
+logs/
+./src/config.py
+models/

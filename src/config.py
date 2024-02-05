@@ -1,3 +1,13 @@
 BATCH_SIZE = 32
 IMAGE_SIZE = [500, 500]
 CLASS_NAMES = ["AD", "CN", "MCI", "pMCI"]
+MODEL_SAVE_PATH = "/home/white/uni_workspace/ECM34001-AD-Classifier/models"
+LOG_PATH = "/home/white/uni_workspace/ECM34001-AD-Classifier/logs"
+
+ADNI_DATASET_PATH = "/mnt/s/ADNI"
+METADATA_PATH = "/mnt/s/MPRAGE__CN_MCI_pMCI_AD__1_20_2024.csv"
+
+DATA_RESULTS_PATH = "/mnt/s/ADNI_POST_PROCESS_3D"
+SLICE_RESULTS_PATH = "/mnt/s/ADNI_POST_PROCESS_SLICE"
+
+DATASET_PATH = "/mnt/s/ADNI_POST_PROCESS_SLICE"
