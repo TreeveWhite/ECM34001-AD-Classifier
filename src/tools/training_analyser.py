@@ -8,7 +8,7 @@ def extract_data(log_file):
         extracted_logs = {1: []}
         curr_epoch = 1
         for line in f.readlines():
-            line = line.strip()
+            line = line.strip().replace("\x08", "")
             new_epoch_match = re.match(r'Epoch (\d+)/', line)
             if new_epoch_match:
                 curr_epoch = int(new_epoch_match.group(1))
@@ -30,6 +30,8 @@ def plot(data, metric="accuracy"):
     y_values = []
     for epoch in data.keys():
         for i, step in enumerate(data[epoch]):
+            if step == {}:
+                continue
             x_values.append(f"{epoch}.{i+1}")
             y_values.append(step[metric])
 
@@ -42,5 +44,5 @@ def plot(data, metric="accuracy"):
 
 
 if __name__ == "__main__":
-    plot(extract_data(
-        "/home/white/uni_workspace/ecm3401-dissertation/ECM34001-AD-Classifier/src/tools/example.txt"))
+    logs_path = "/home/white/uni_workspace/ECM34001-AD-Classifier/models/DENSE_NET-2024-02-06-19:11/log.log"
+    plot(extract_data(logs_path))

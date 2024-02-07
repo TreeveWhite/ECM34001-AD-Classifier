@@ -4,7 +4,7 @@ from keras.preprocessing import image_dataset_from_directory
 from datetime import datetime
 import os
 
-from cnn_models import dense_net
+from cnn_models import dense_net, vgg_net
 
 from config import IMAGE_SIZE, MODEL_SAVE_PATH, DATASET_PATH
 
@@ -14,7 +14,7 @@ AUTOTUNE = tf.data.AUTOTUNE
 BATCH_SIZE = 16 * STRATEGY.num_replicas_in_sync
 EPOCHS = 10
 
-MODEL_NAME = "DENSENET"
+MODEL_NAME = "DENSE_NET"
 
 
 if __name__ == "__main__":
