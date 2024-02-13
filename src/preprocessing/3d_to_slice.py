@@ -13,6 +13,7 @@ DATA_RESULTS_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI_PO
 SLICE_RESULTS_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI_POST_PROCESS_SLICE"
 
 SLICE_MODEL_PATH = "/home/white/uni_workspace/ecm3401-dissertation/ECM34001-AD-Classifier/models/slice_extraction_model.h5"
+SLICE_MODEL = tf.keras.models.load_model(SLICE_MODEL_PATH)
 
 IMAGE_SIZE = [200, 200]
 
@@ -80,8 +81,59 @@ def extract_brain(img_slice, denoise=True):
     return brain_out
 
 
+def get_slices(img3d):
+    # Define Desired Slice Indexes
+    slice_indexes = range(
+        round(img3d.shape[0]*0.2), round(img3d.shape[0]*0.8))
+
+    slice_scores = {}
+    for index in slice_indexes:
+        img_slice = img3d[index, :, :].T
+
+        img_slice_normalized = (
+            img_slice - np.min(img_slice)) / (np.max(img_slice) - np.min(img_slice))
+
+        img_slice_uint8 = (
+            img_slice_normalized * 255).astype("uint8")
+
+        image_slice_resized = cv2.resize(img_slice_uint8, (200, 200))
+
+        image_data = cv2.cvtColor(
+            image_slice_resized, cv2.COLOR_BayerGB2BGR)
+
+        slice_scores[index] = SLICE_MODEL.predict(
+            np.expand_dims(image_data, axis=0))[0]
+
+    good_slices = [key
+                   for key, value in slice_scores.items() if value == 1]
+    return good_slices
+
+
+def preprocess(img_slice, denoise):
+    img_slice_normalized = (
+        img_slice - np.min(img_slice)) / (np.max(img_slice) - np.min(img_slice))
+
+    img_slice_uint8 = (
+        img_slice_normalized * 255).astype("uint8")
+
+    image_slice_resized = cv2.resize(img_slice_uint8, (200, 200))
+
+    # Skull Extraction & Guassian Denoise
+    brain_out = extract_brain(extract_brain(
+        image_slice_resized, False), denoise)
+
+    # Re-Normalise
+    brain_out_normalized = (
+        brain_out - np.min(brain_out)) / (np.max(brain_out) - np.min(brain_out))
+
+    # Resize (Aspect ratio Aware)
+    resized_brain_out = cv2.resize(
+        brain_out_normalized, IMAGE_SIZE)
+
+    return resized_brain_out
+
+
 def npy_to_slice(data_path, results_path, denoise, show):
-    slice_model = tf.keras.models.load_model(SLICE_MODEL_PATH)
     for root, _, files in os.walk(data_path):
         class_name = os.path.basename(root)
 
@@ -97,57 +149,14 @@ def npy_to_slice(data_path, results_path, denoise, show):
 
             img3d = np.load(os.path.join(root, npy_file))
 
-            # Define Desired Slice Indexes
-            slice_indexes = range(
-                round(img3d.shape[0]*0.2), round(img3d.shape[0]*0.8))
+            good_slices_indexes = get_slices(img3d)
 
-            slice_scores = {}
-            for index in slice_indexes:
+            for index in good_slices_indexes:
                 img_slice = img3d[index, :, :].T
+                show_image("Preproessed", img_slice, "grey", show)
 
-                img_slice_normalized = (
-                    img_slice - np.min(img_slice)) / (np.max(img_slice) - np.min(img_slice))
-
-                img_slice_uint8 = (
-                    img_slice_normalized * 255).astype("uint8")
-
-                image_slice_resized = cv2.resize(img_slice_uint8, (200, 200))
-
-                image_data = cv2.cvtColor(
-                    image_slice_resized, cv2.COLOR_BayerGB2BGR)
-
-                slice_scores[index] = slice_model.predict(
-                    np.expand_dims(image_data, axis=0))[0]
-
-            good_slices = [[key, value]
-                           for key, value in slice_scores.items() if value == 1]
-
-            for s, _ in good_slices:
-                best_img_slice = img3d[s, :, :].T
-
-                show_image("Pre-proessing", best_img_slice, "grey", show)
-
-                img_slice_normalized = (
-                    best_img_slice - np.min(best_img_slice)) / (np.max(best_img_slice) - np.min(best_img_slice))
-
-                img_slice_uint8 = (
-                    img_slice_normalized * 255).astype("uint8")
-
-                image_slice_resized = cv2.resize(img_slice_uint8, (200, 200))
-
-                # Skull Extraction & Guassian Denoise
-                brain_out = extract_brain(extract_brain(
-                    image_slice_resized, False), denoise)
-
-                # Re-Normalise
-                brain_out_normalized = (
-                    brain_out - np.min(brain_out)) / (np.max(brain_out) - np.min(brain_out))
-
-                # Resize (Aspect ratio Aware)
-                resized_brain_out = cv2.resize(
-                    brain_out_normalized, IMAGE_SIZE)
-
-                show_image("Postprocessed", resized_brain_out, "grey", show)
+                post_processed_slice = preprocess(img_slice, denoise)
+                show_image("Postprocessed", post_processed_slice, "grey", show)
 
 
 if __name__ == "__main__":
