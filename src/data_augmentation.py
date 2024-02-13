@@ -3,9 +3,9 @@ import os
 import sys
 from PIL import Image
 
-DATASET_BASE_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI_POST_PROCESS_SLICE/"
+DATASET_BASE_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI_SLICE_TRAINING_DATA"
 
-CLASSES = ["AD", "MCI", "CN", "pMCI"]
+CLASSES = ["GOOD", "BAD"]
 
 
 def create_augmented_data(class_path, target_num_images):
@@ -18,6 +18,9 @@ def create_augmented_data(class_path, target_num_images):
 
     num_per_sample = num_augmented_required // num_existing_images
     rem = num_augmented_required % num_existing_images
+
+    if num_per_sample < 0:
+        print(f"Already have enough images in {class_path}")
 
     for image_path in existing_images:
         todo = num_per_sample
@@ -33,7 +36,6 @@ def create_augmented_data(class_path, target_num_images):
 
             augmented_base = Image.new("RGB", image.size, "black")
 
-            # Calculate the position to paste the rotated image
             paste_position = ((image.size[0] - augmented_image.width) //
                               2, (image.size[1] - augmented_image.height) // 2)
 
