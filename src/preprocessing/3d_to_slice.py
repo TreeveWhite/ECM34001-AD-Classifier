@@ -81,7 +81,7 @@ def extract_brain(img_slice, denoise=True):
     return brain_out
 
 
-def get_slices(img3d, only_three):
+def get_slices(img3d):
     # Define Desired Slice Indexes
     slice_indexes = range(
         round(img3d.shape[0]*0.2), round(img3d.shape[0]*0.8))
@@ -108,12 +108,6 @@ def get_slices(img3d, only_three):
 
     good_slices = list(map(lambda x: slice_indexes[x[1]], sorted(
         zip(slice_scores, range(len(slice_scores))), reverse=True)[:3]))
-
-    if only_three == True:
-        good_slices.sort()
-        # Get the middle 3 indices
-        middle_index = len(good_slices) // 2
-        good_slices = good_slices[middle_index - 1: middle_index + 2]
 
     return good_slices
 
@@ -142,7 +136,7 @@ def preprocess(img_slice, denoise):
     return resized_brain_out
 
 
-def npy_to_slice(data_path, results_path, denoise, only_three, show):
+def npy_to_slice(data_path, results_path, denoise, show):
     for root, _, files in os.walk(data_path):
         class_name = os.path.basename(root)
 
@@ -157,7 +151,7 @@ def npy_to_slice(data_path, results_path, denoise, only_three, show):
 
             img3d = np.load(os.path.join(root, npy_file))
 
-            good_slices_indexes = get_slices(img3d, only_three=only_three)
+            good_slices_indexes = get_slices(img3d)
 
             for index in good_slices_indexes:
                 img_slice = img3d[index, :, :].T
@@ -184,5 +178,4 @@ if __name__ == "__main__":
     npy_to_slice(data_path=DATA_RESULTS_PATH,
                  results_path=SLICE_RESULTS_PATH,
                  denoise=False if "no_denoise" in args else True,
-                 only_three=True if "only_three" in args else False,
                  show=True if "show" in args else False)
