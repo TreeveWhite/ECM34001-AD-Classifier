@@ -52,12 +52,6 @@ def make_classes_folders(parent_dir, classes):
         os.makedirs(group_path, exist_ok=True)
 
 
-def dice_coefficient(gt_mask, pred_mask):
-    intersection = np.sum(np.logical_and(gt_mask, pred_mask))
-    union = np.sum(np.logical_or(gt_mask, pred_mask))
-    return (2 * intersection) / (union + intersection)
-
-
 def extract_brain(img_slice, denoise=True):
     # Apply Otsu's automatic thresholding
     ret, thresh = cv2.threshold(
@@ -81,6 +75,15 @@ def extract_brain(img_slice, denoise=True):
     return brain_out
 
 
+def slice_to_img(data):
+    img_slice_normalized = (
+        data - np.min(data)) / (np.max(data) - np.min(data))
+    img_slice_uint8 = (
+        img_slice_normalized * 255).astype("uint8")
+    image_slice_resized = cv2.resize(img_slice_uint8, (200, 200))
+    return image_slice_resized
+
+
 def get_slices(img3d):
     # Define Desired Slice Indexes
     slice_indexes = range(
@@ -88,18 +91,12 @@ def get_slices(img3d):
 
     slices_dataset = []
     for index in slice_indexes:
-        img_slice = img3d[index, :, :].T
+        slice = img3d[index, :, :].T
 
-        img_slice_normalized = (
-            img_slice - np.min(img_slice)) / (np.max(img_slice) - np.min(img_slice))
-
-        img_slice_uint8 = (
-            img_slice_normalized * 255).astype("uint8")
-
-        image_slice_resized = cv2.resize(img_slice_uint8, (200, 200))
+        img_slice = slice_to_img(slice)
 
         image_data = cv2.cvtColor(
-            image_slice_resized, cv2.COLOR_BayerGB2BGR)
+            img_slice, cv2.COLOR_BayerGB2BGR)
 
         slices_dataset.append(image_data)
 
@@ -110,30 +107,6 @@ def get_slices(img3d):
         zip(slice_scores, range(len(slice_scores))), reverse=True)[:3]))
 
     return good_slices
-
-
-def preprocess(img_slice, denoise):
-    img_slice_normalized = (
-        img_slice - np.min(img_slice)) / (np.max(img_slice) - np.min(img_slice))
-
-    img_slice_uint8 = (
-        img_slice_normalized * 255).astype("uint8")
-
-    image_slice_resized = cv2.resize(img_slice_uint8, (200, 200))
-
-    # Skull Extraction & Guassian Denoise
-    brain_out = extract_brain(extract_brain(
-        image_slice_resized, False), denoise)
-
-    # Re-Normalise
-    brain_out_normalized = (
-        brain_out - np.min(brain_out)) / (np.max(brain_out) - np.min(brain_out))
-
-    # Resize (Aspect ratio Aware)
-    resized_brain_out = cv2.resize(
-        brain_out_normalized, IMAGE_SIZE)
-
-    return resized_brain_out
 
 
 def npy_to_slice(data_path, results_path, denoise, show):
@@ -154,11 +127,16 @@ def npy_to_slice(data_path, results_path, denoise, show):
             good_slices_indexes = get_slices(img3d)
 
             for index in good_slices_indexes:
-                img_slice = img3d[index, :, :].T
-                show_image("Preproessed", img_slice, "grey", show)
+                slice = img3d[index, :, :].T
+                show_image("Preproessed", slice, "grey", show)
 
-                post_processed_slice = preprocess(img_slice, denoise)
+                # Preprocess -> Skull Extraction -> Guassian Denoise
+                img_slice = slice_to_img(slice)
+                post_processed_slice = extract_brain(extract_brain(
+                    img_slice, False), denoise)
                 show_image("Postprocessed", post_processed_slice, "grey", show)
+
+                print(post_processed_slice.shape)
 
                 imsave(f"{save_path}-{index}.png",
                        post_processed_slice, cmap="grey")
