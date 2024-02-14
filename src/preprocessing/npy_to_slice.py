@@ -136,8 +136,6 @@ def npy_to_slice(data_path, results_path, denoise, show):
                     img_slice, False), denoise)
                 show_image("Postprocessed", post_processed_slice, "grey", show)
 
-                print(post_processed_slice.shape)
-
                 imsave(f"{save_path}-{index}.png",
                        post_processed_slice, cmap="grey")
 
