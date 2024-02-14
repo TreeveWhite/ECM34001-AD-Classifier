@@ -81,7 +81,7 @@ def extract_brain(img_slice, denoise=True):
     return brain_out
 
 
-def get_slices(img3d):
+def get_slices(img3d, only_three):
     # Define Desired Slice Indexes
     slice_indexes = range(
         round(img3d.shape[0]*0.2), round(img3d.shape[0]*0.8))
@@ -106,10 +106,19 @@ def get_slices(img3d):
     slice_images_array = np.array(slices_dataset)
     slice_scores = SLICE_MODEL.predict(slice_images_array)
 
-    print(slice_scores)
+    if 1 in slice_scores:
+        good_slices = [slice_indexes[key]
+                       for key, value in enumerate(slice_scores) if value == 1]
 
-    good_slices = [slice_indexes[key]
-                   for key, value in enumerate(slice_scores) if value == 1]
+        if only_three == True:
+            good_slices.sort()
+            # Get the middle 3 indices
+            middle_index = len(good_slices) // 2
+            good_slices = good_slices[middle_index - 1: middle_index + 2]
+    else:
+        good_slices = [slice_indexes[key]
+                       for key in np.argsort(slice_scores)[-3:]]
+
     return good_slices
 
 
@@ -137,7 +146,7 @@ def preprocess(img_slice, denoise):
     return resized_brain_out
 
 
-def npy_to_slice(data_path, results_path, denoise, show):
+def npy_to_slice(data_path, results_path, denoise, only_three, show):
     for root, _, files in os.walk(data_path):
         class_name = os.path.basename(root)
 
@@ -153,7 +162,7 @@ def npy_to_slice(data_path, results_path, denoise, show):
 
             img3d = np.load(os.path.join(root, npy_file))
 
-            good_slices_indexes = get_slices(img3d)
+            good_slices_indexes = get_slices(img3d, only_three=only_three)
 
             for index in good_slices_indexes:
                 img_slice = img3d[index, :, :].T
@@ -177,4 +186,5 @@ if __name__ == "__main__":
     npy_to_slice(data_path=DATA_RESULTS_PATH,
                  results_path=SLICE_RESULTS_PATH,
                  denoise=False if "no_denoise" in args else True,
+                 only_three=True if "only_three" in args else False,
                  show=True if "show" in args else False)
