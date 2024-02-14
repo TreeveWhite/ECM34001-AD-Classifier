@@ -86,7 +86,7 @@ def get_slices(img3d):
     slice_indexes = range(
         round(img3d.shape[0]*0.2), round(img3d.shape[0]*0.8))
 
-    slice_scores = {}
+    slices_dataset = []
     for index in slice_indexes:
         img_slice = img3d[index, :, :].T
 
@@ -101,11 +101,15 @@ def get_slices(img3d):
         image_data = cv2.cvtColor(
             image_slice_resized, cv2.COLOR_BayerGB2BGR)
 
-        slice_scores[index] = SLICE_MODEL.predict(
-            np.expand_dims(image_data, axis=0))[0]
+        slices_dataset.append(image_data)
 
-    good_slices = [key
-                   for key, value in slice_scores.items() if value == 1]
+    slice_images_array = np.array(slices_dataset)
+    slice_scores = SLICE_MODEL.predict(slice_images_array)
+
+    print(slice_scores)
+
+    good_slices = [slice_indexes[key]
+                   for key, value in enumerate(slice_scores) if value == 1]
     return good_slices
 
 
