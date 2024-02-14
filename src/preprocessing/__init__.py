@@ -1,2 +1,2 @@
-from . import input_to_3d
-from . import 3d
+from . import input_to_npy
+from . import npy_to_slice
