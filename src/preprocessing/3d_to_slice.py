@@ -106,18 +106,14 @@ def get_slices(img3d, only_three):
     slice_images_array = np.array(slices_dataset)
     slice_scores = SLICE_MODEL.predict(slice_images_array)
 
-    if 1 in slice_scores:
-        good_slices = [slice_indexes[key]
-                       for key, value in enumerate(slice_scores) if value == 1]
+    good_slices = list(map(lambda x: slice_indexes[x[1]], sorted(
+        zip(slice_scores, range(len(slice_scores))), reverse=True)[:3]))
 
-        if only_three == True:
-            good_slices.sort()
-            # Get the middle 3 indices
-            middle_index = len(good_slices) // 2
-            good_slices = good_slices[middle_index - 1: middle_index + 2]
-    else:
-        good_slices = [slice_indexes[key]
-                       for key in np.argsort(slice_scores)[-3:]]
+    if only_three == True:
+        good_slices.sort()
+        # Get the middle 3 indices
+        middle_index = len(good_slices) // 2
+        good_slices = good_slices[middle_index - 1: middle_index + 2]
 
     return good_slices
 
@@ -158,7 +154,6 @@ def npy_to_slice(data_path, results_path, denoise, only_three, show):
 
             save_path = os.path.join(os.path.join(
                 results_path, class_name), f"{npy_file.split('.')[0]}")
-            os.makedirs(save_path, exist_ok=True)
 
             img3d = np.load(os.path.join(root, npy_file))
 
@@ -170,6 +165,9 @@ def npy_to_slice(data_path, results_path, denoise, only_three, show):
 
                 post_processed_slice = preprocess(img_slice, denoise)
                 show_image("Postprocessed", post_processed_slice, "grey", show)
+
+                imsave(f"{save_path}-{index}.png",
+                       post_processed_slice, cmap="grey")
 
 
 if __name__ == "__main__":
