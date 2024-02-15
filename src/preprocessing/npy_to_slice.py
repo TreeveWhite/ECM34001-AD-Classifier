@@ -7,13 +7,14 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
+from exceptions import NoGoodSlicesException
+
 METADATA_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/MPRAGE__CN_MCI_pMCI_AD__1_20_2024.csv"
 
 DATA_RESULTS_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI_POST_PROCESS_3D"
 SLICE_RESULTS_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI_POST_PROCESS_SLICE"
 
 SLICE_MODEL_PATH = "/home/white/uni_workspace/ecm3401-dissertation/ECM34001-AD-Classifier/models/slice_extraction_model.h5"
-SLICE_MODEL = tf.keras.models.load_model(SLICE_MODEL_PATH)
 
 IMAGE_SIZE = [200, 200]
 
@@ -101,15 +102,25 @@ def get_slices(img3d):
         slices_dataset.append(image_data)
 
     slice_images_array = np.array(slices_dataset)
-    slice_scores = SLICE_MODEL.predict(slice_images_array)
+    pred_scores = SLICE_MODEL.predict(slice_images_array)
 
-    good_slices = list(map(lambda x: slice_indexes[x[1]], sorted(
-        zip(slice_scores, range(len(slice_scores))), reverse=True)[:3]))
+    slice_scores = {}
 
-    return good_slices
+    for i, pred_score in enumerate(pred_scores):
+        if pred_score >= 0.5:
+            slice_scores[slice_indexes[i]] = pred_score
+
+    if len(pred_scores) < 3:
+        raise NoGoodSlicesException("No slices predicted >0.5")
+
+    good_slices = sorted(slice_scores.items(),
+                         key=lambda x: x[1], reverse=True)[:3]
+
+    # Ony return the index not the scores
+    return list(map(lambda x: x[0], good_slices))
 
 
-def npy_to_slice(data_path, results_path, denoise, show):
+def npy_dataset_to_slice(data_path, results_path, denoise, show):
     for root, _, files in os.walk(data_path):
         class_name = os.path.basename(root)
 
@@ -117,14 +128,19 @@ def npy_to_slice(data_path, results_path, denoise, show):
 
         for npy_file in npy_files:
 
-            print(npy_file.split('.')[0])
+            scan_id = npy_file.split('.')[0]
+
+            print(scan_id)
 
             save_path = os.path.join(os.path.join(
-                results_path, class_name), f"{npy_file.split('.')[0]}")
+                results_path, class_name), f"{scan_id}")
 
             img3d = np.load(os.path.join(root, npy_file))
 
-            good_slices_indexes = get_slices(img3d)
+            try:
+                good_slices_indexes = get_slices(img3d)
+            except NoGoodSlicesException as e:
+                print(f"Unable to extract slices for {scan_id}")
 
             for index in good_slices_indexes:
                 slice = img3d[index, :, :].T
@@ -142,6 +158,8 @@ def npy_to_slice(data_path, results_path, denoise, show):
 
 if __name__ == "__main__":
 
+    SLICE_MODEL = tf.keras.models.load_model(SLICE_MODEL_PATH)
+
     args = sys.argv[1:]
 
     os.makedirs(SLICE_RESULTS_PATH, exist_ok=True)
@@ -151,7 +169,7 @@ if __name__ == "__main__":
     classes = metadata["Group"].unique()
     make_classes_folders(SLICE_RESULTS_PATH, classes)
 
-    npy_to_slice(data_path=DATA_RESULTS_PATH,
-                 results_path=SLICE_RESULTS_PATH,
-                 denoise=False if "no_denoise" in args else True,
-                 show=True if "show" in args else False)
+    npy_dataset_to_slice(data_path=DATA_RESULTS_PATH,
+                         results_path=SLICE_RESULTS_PATH,
+                         denoise=False if "no_denoise" in args else True,
+                         show=True if "show" in args else False)

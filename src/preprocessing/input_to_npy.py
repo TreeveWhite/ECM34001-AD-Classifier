@@ -42,7 +42,35 @@ def filter_order_slices(slices):
     return sorted(resp, key=lambda s: s.SliceLocation)
 
 
-def input_to_3dimg(metadata, dataset_path, results_path):
+def extract_3dimg(dcm_files):
+    if len(dcm_files) < 5:
+        print(f"WARNING: Not enough dcm slices")
+        return None
+
+    existing_slices = filter_order_slices(
+        load_dicom_series(dcm_files))
+
+    slice_position = existing_slices[0].ImageOrientationPatient
+    img_shape = list(existing_slices[0].pixel_array.shape)
+    img_shape.append(len(existing_slices))
+
+    img3d = np.zeros(img_shape)
+    for i, s in enumerate(existing_slices):
+        img2d = s.pixel_array
+
+        if slice_position == [0, 1, 0, 0, 0, -1]:
+            # Input Slices are Sattigal
+            img3d[:, :, i] = img2d
+        elif slice_position == [1, 0, 0, 0, 0, -1]:
+            # Input Slices are Coronal
+            img3d[:, i, :] = img2d
+        elif slice_position == [1, 0, 0, 0, 1, 0]:
+            # Input Slices are Axial
+            img3d[i, :, :] = img2d
+    return img3d
+
+
+def dataset_to_3dimg(metadata, dataset_path, results_path):
     # Create new folders in Results Path for the Classes
     make_classes_folders(results_path, metadata["Group"].unique())
 
@@ -56,30 +84,7 @@ def input_to_3dimg(metadata, dataset_path, results_path):
                 dcm_files = [os.path.join(root, file)
                              for file in files if file.endswith('.dcm')]
 
-                if len(dcm_files) < 5:
-                    print(f"WARNING: Not enough dcm slices {image_id}")
-                    continue
-
-                existing_slices = filter_order_slices(
-                    load_dicom_series([os.path.join(root, file) for file in files if file.endswith('.dcm')]))
-
-                slice_position = existing_slices[0].ImageOrientationPatient
-                img_shape = list(existing_slices[0].pixel_array.shape)
-                img_shape.append(len(existing_slices))
-
-                img3d = np.zeros(img_shape)
-                for i, s in enumerate(existing_slices):
-                    img2d = s.pixel_array
-
-                    if slice_position == [0, 1, 0, 0, 0, -1]:
-                        # Input Slices are Sattigal
-                        img3d[:, :, i] = img2d
-                    elif slice_position == [1, 0, 0, 0, 0, -1]:
-                        # Input Slices are Coronal
-                        img3d[:, i, :] = img2d
-                    elif slice_position == [1, 0, 0, 0, 1, 0]:
-                        # Input Slices are Axial
-                        img3d[i, :, :] = img2d
+                img3d = extract_3dimg(dcm_files)
 
                 save_path = os.path.join(class_results_path, image_id)
                 np.save(f"{save_path}.npy", img3d)
@@ -93,5 +98,5 @@ if __name__ == "__main__":
 
     os.makedirs(DATA_RESULTS_PATH, exist_ok=True)
 
-    input_to_3dimg(metadata, dataset_path=ADNI_DATASET_PATH,
-                   results_path=DATA_RESULTS_PATH)
+    dataset_to_3dimg(metadata, dataset_path=ADNI_DATASET_PATH,
+                     results_path=DATA_RESULTS_PATH)
