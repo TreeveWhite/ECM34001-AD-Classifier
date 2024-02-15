@@ -4,3 +4,4 @@
 logs/
 ./src/config.py
 models/
+*.pyc
