@@ -102,24 +102,19 @@ def get_slices(img3d):
         slices_dataset.append(image_data)
 
     slice_images_array = np.array(slices_dataset)
-    pred_scores = SLICE_MODEL.predict(slice_images_array)
+    pred_scores = list(map(lambda x : x[0], SLICE_MODEL.predict(slice_images_array)))
 
-    slice_scores = {}
+    good_slices = [slice_indexes[i] for i, score in enumerate(pred_scores) if score == 1]
 
-    print([round(score, 3) for score in pred_scores])
+    if len(good_slices) < 3:
+        sorted_indicies = sorted(range(len(pred_scores)), key=lambda i: pred_scores[i], reverse=True)
+        next_best = [slice_indexes[i] for i in sorted_indicies if slice_indexes[i] not in good_slices and pred_scores[i] > 0.5]
+        good_slices = good_slices + next_best[:3 - len(good_slices)]
 
-    for i, pred_score in enumerate(pred_scores):
-        if pred_score >= 0.5:
-            slice_scores[slice_indexes[i]] = pred_score
-
-    if len(slice_scores) < 3:
+    if len(good_slices) < 1:
         raise NoGoodSlicesException("No slices predicted >0.5")
 
-    good_slices = sorted(slice_scores.items(),
-                         key=lambda x: x[1], reverse=True)[:3]
-
-    # Ony return the index not the scores
-    return list(map(lambda x: x[0], good_slices))
+    return good_slices
 
 
 def npy_dataset_to_slice(data_path, results_path, denoise, show):
