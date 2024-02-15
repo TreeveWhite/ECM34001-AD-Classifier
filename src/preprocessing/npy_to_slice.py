@@ -9,12 +9,12 @@ import tensorflow as tf
 
 from exceptions import NoGoodSlicesException
 
-METADATA_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/MPRAGE__CN_MCI_pMCI_AD__1_20_2024.csv"
+METADATA_PATH = "/mnt/s/MPRAGE__CN_MCI_pMCI_AD__1_20_2024.csv"
 
-DATA_RESULTS_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI_POST_PROCESS_3D"
-SLICE_RESULTS_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/ADNI_POST_PROCESS_SLICE"
+DATA_RESULTS_PATH = "/mnt/s/ADNI_POST_PROCESS_3D"
+SLICE_RESULTS_PATH = "/mnt/s/ADNI_POST_PROCESS_MODELED_SLICE"
 
-SLICE_MODEL_PATH = "/home/white/uni_workspace/ecm3401-dissertation/ECM34001-AD-Classifier/models/slice_extraction_model.h5"
+SLICE_MODEL_PATH = "/mnt/s/slice_extraction_model.h5"
 
 IMAGE_SIZE = [200, 200]
 
@@ -106,11 +106,13 @@ def get_slices(img3d):
 
     slice_scores = {}
 
+    print([round(score, 3) for score in pred_scores])
+
     for i, pred_score in enumerate(pred_scores):
         if pred_score >= 0.5:
             slice_scores[slice_indexes[i]] = pred_score
 
-    if len(pred_scores) < 3:
+    if len(slice_scores) < 3:
         raise NoGoodSlicesException("No slices predicted >0.5")
 
     good_slices = sorted(slice_scores.items(),
