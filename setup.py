@@ -7,7 +7,7 @@ setup(
     author_email="treevew@gmail.com",
     description="AD Model",
     packages=find_packages('src'),
-    package_data={"": "src"},
+    package_dir={"": "src"},
     include_package_data=True,
     install_requires=[
 
