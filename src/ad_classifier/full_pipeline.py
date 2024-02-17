@@ -3,16 +3,24 @@ from ad_classifier.preprocessing.npy_to_slice import extract_brain, get_slices, 
 
 from ad_classifier.postprocessing.attention_maps import get_attention_map
 
+import keras
+
 
 class FullPipeline:
-    def __init__(self, slice_model, ad_model) -> None:
-        self.slice_model = slice_model
-        self.ad_model = ad_model
+    def __init__(self, slice_model_path, ad_model_path) -> None:
+        self.load_slice_model(slice_model_path)
+        self.load_ad_model(ad_model_path)
+
+    def load_slice_model(self, model_path):
+        self.slice_model = keras.models.load_model(model_path)
+
+    def load_ad_model(self, model_path):
+        self.ad_model = keras.models.load_model(model_path)
 
     def extract_slices(self, dcm_files):
         slices3d = extract_3dimg(dcm_files)
 
-        good_slices_indexes = get_slices(slices3d)
+        good_slices_indexes = get_slices(slices3d, self.slice_model)
 
         predictor_slices = []
         for index in good_slices_indexes:

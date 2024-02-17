@@ -85,7 +85,7 @@ def slice_to_img(data):
     return image_slice_resized
 
 
-def get_slices(img3d):
+def get_slices(img3d, slice_model):
     # Define Desired Slice Indexes
     slice_indexes = range(
         round(img3d.shape[0]*0.2), round(img3d.shape[0]*0.8))
@@ -103,7 +103,7 @@ def get_slices(img3d):
 
     slice_images_array = np.array(slices_dataset)
     pred_scores = list(
-        map(lambda x: x[0], SLICE_MODEL.predict(slice_images_array)))
+        map(lambda x: x[0], slice_model.predict(slice_images_array)))
 
     good_slices = [slice_indexes[i]
                    for i, score in enumerate(pred_scores) if score == 1]
