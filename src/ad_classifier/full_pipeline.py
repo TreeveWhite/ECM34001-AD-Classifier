@@ -1,7 +1,7 @@
-from preprocessing.input_to_npy import extract_3dimg
-from preprocessing.npy_to_slice import extract_brain, get_slices, slice_to_img
+from ad_classifier.preprocessing.input_to_npy import extract_3dimg
+from ad_classifier.preprocessing.npy_to_slice import extract_brain, get_slices, slice_to_img
 
-from postprocessing.attention_maps import get_attention_map
+from ad_classifier.postprocessing.attention_maps import get_attention_map
 
 
 class FullPipeline:
