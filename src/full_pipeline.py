@@ -9,8 +9,7 @@ class FullPipeline:
         self.slice_model = slice_model
         self.ad_model = ad_model
 
-    def make_prediction(self, dcm_files):
-        # PreProcessing
+    def extract_slices(self, dcm_files):
         slices3d = extract_3dimg(dcm_files)
 
         good_slices_indexes = get_slices(slices3d)
@@ -26,6 +25,9 @@ class FullPipeline:
 
             predictor_slices.append(post_processed_slice)
 
+        return predictor_slices
+
+    def make_prediction(self, predictor_slices):
         # AD Model
         predictions = self.ad_model.predict(predictor_slices)
 
