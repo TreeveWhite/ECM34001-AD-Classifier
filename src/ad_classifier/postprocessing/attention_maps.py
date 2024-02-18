@@ -29,6 +29,7 @@ def postprocess_activations(activations):
 def apply_heatmap(weights, img):
     # generate heat maps
     heatmap = cv2.applyColorMap(weights, cv2.COLORMAP_JET)
+    img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
     heatmap = cv2.addWeighted(heatmap, 0.7, img, 0.3, 0)
     return heatmap
 

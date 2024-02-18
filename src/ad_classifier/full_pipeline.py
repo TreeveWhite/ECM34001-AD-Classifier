@@ -3,7 +3,9 @@ from ad_classifier.preprocessing.npy_to_slice import extract_brain, get_slices, 
 
 from ad_classifier.postprocessing.attention_maps import get_attention_map
 
+import numpy as np
 import keras
+import cv2
 
 
 class FullPipeline:
@@ -16,6 +18,9 @@ class FullPipeline:
 
     def load_ad_model(self, model_path):
         self.ad_model = keras.models.load_model(model_path)
+
+    def load_in_scan(self, img_path):
+        return np.expand_dims(cv2.imread(img_path, cv2.IMREAD_GRAYSCALE), -1)
 
     def extract_slices(self, dcm_files):
         slices3d = extract_3dimg(dcm_files)
@@ -37,6 +42,7 @@ class FullPipeline:
 
     def make_prediction(self, predictor_slices):
         # AD Model
+        predictor_slices = np.array(predictor_slices)
         predictions = self.ad_model.predict(predictor_slices)
 
         # Average the class predictions of all predictor_slices
