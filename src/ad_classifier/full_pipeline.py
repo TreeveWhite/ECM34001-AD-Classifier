@@ -7,6 +7,8 @@ import numpy as np
 import keras
 import cv2
 
+CLASS_NAMES = ["AD", "CN", "MCI", "pMCI"]
+
 
 class FullPipeline:
     def __init__(self, slice_model_path, ad_model_path) -> None:
@@ -46,11 +48,13 @@ class FullPipeline:
         predictions = self.ad_model.predict(predictor_slices)
 
         # Average the class predictions of all predictor_slices
-        avg_prediction = [
-            sum([pred[i] for pred in predictions])/len(predictions) for i in range(4)]
+        avg_prediction = np.array([
+            sum([pred[i] for pred in predictions])/len(predictions) for i in range(4)])
+
+        diagnosis = CLASS_NAMES[avg_prediction.argmax(axis=-1)]
 
         # Attention Maps
         attention_maps = [get_attention_map(
             img, self.ad_model) for img in predictor_slices]
 
-        return avg_prediction, attention_maps
+        return diagnosis, avg_prediction, attention_maps
