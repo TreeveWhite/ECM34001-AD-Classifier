@@ -1,4 +1,5 @@
 import re
+import sys
 import pandas as pd
 from matplotlib import pyplot as plt
 
@@ -26,28 +27,27 @@ def extract_data(log_file):
 
 
 def save_data(data, metrics=["accuracy", "loss", "val_loss", "val_accuracy"]):
+    # Dictionary to hold all y_values for each metric
+    all_y_values = {metric: [] for metric in metrics}
+
+    # Extracting y values for each metric
     for metric in metrics:
-        x_values = []
-        y_values = []
         for epoch in data.keys():
             for i, step in enumerate(data[epoch]):
-                print(step)
                 if not (metric in step.keys()):
                     continue
                 if step == {}:
                     continue
-                x_values.append(f"{epoch}.{i+1}")
-                y_values.append(step[metric])
+                all_y_values[metric].append(step[metric])
 
-        # Create a DataFrame
-        excel_data = {'x_values': x_values, 'y_values': y_values}
-        df = pd.DataFrame(excel_data)
+    # Create a DataFrame with all y_values
+    df = pd.DataFrame(all_y_values)
 
-        # Write DataFrame to an Excel file
-        excel_file_path = f'{metric}.xlsx'
-        df.to_excel(excel_file_path, index=False)
+    # Write DataFrame to an Excel file
+    excel_file_path = 'metrics_data.xlsx'
+    df.to_excel(excel_file_path, index=False)
 
 
 if __name__ == "__main__":
-    logs_path = "/home/white/uni_workspace/ecm3401-dissertation/data/MODEL_LOGS/Densenet/densenet.txt"
+    logs_path = sys.args(-1)
     save_data(extract_data(logs_path))
