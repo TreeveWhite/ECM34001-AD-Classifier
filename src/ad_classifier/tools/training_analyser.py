@@ -49,5 +49,5 @@ def save_data(data, metrics=["accuracy", "loss", "val_loss", "val_accuracy"]):
 
 
 if __name__ == "__main__":
-    logs_path = sys.args(-1)
+    logs_path = sys.argv[-1]
     save_data(extract_data(logs_path))
