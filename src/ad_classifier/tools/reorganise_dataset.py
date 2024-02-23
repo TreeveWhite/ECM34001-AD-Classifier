@@ -6,7 +6,7 @@ source_dir = "/mnt/c/Users/treev/Desktop/ADNI_POST_PROCESS_MODELED_SLICE_AUG"
 
 destination_dir = "/mnt/c/Users/treev/Desktop/ADNI_TEST_DATASET"
 
-test_percentage = 0.3
+test_percentage = 0.1
 
 if not os.path.exists(destination_dir):
     os.makedirs(destination_dir)
