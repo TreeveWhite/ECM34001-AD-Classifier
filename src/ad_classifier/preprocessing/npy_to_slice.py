@@ -121,7 +121,7 @@ def get_slices(img3d, slice_model):
     return good_slices
 
 
-def npy_dataset_to_slice(data_path, results_path, denoise, show):
+def npy_dataset_to_slice(data_path, results_path, denoise, show, slice_model):
     for root, _, files in os.walk(data_path):
         class_name = os.path.basename(root)
 
@@ -139,7 +139,7 @@ def npy_dataset_to_slice(data_path, results_path, denoise, show):
             img3d = np.load(os.path.join(root, npy_file))
 
             try:
-                good_slices_indexes = get_slices(img3d)
+                good_slices_indexes = get_slices(img3d, slice_model)
             except NoGoodSlicesException as e:
                 print(f"Unable to extract slices for {scan_id}")
 
@@ -173,4 +173,5 @@ if __name__ == "__main__":
     npy_dataset_to_slice(data_path=DATA_RESULTS_PATH,
                          results_path=SLICE_RESULTS_PATH,
                          denoise=False if "no_denoise" in args else True,
-                         show=True if "show" in args else False)
+                         show=True if "show" in args else False,
+                         slice_model=SLICE_MODEL)
