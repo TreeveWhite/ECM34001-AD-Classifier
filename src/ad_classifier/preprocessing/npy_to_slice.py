@@ -9,12 +9,12 @@ import tensorflow as tf
 
 from ad_classifier.preprocessing.exceptions import NoGoodSlicesException
 
-METADATA_PATH = "/mnt/s/MPRAGE__CN_MCI_pMCI_AD__1_20_2024.csv"
+METADATA_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/test_data/MPRAGE__CN_MCI_pMCI_AD__3_14_2024.csv"
 
-DATA_RESULTS_PATH = "/mnt/s/ADNI_POST_PROCESS_3D"
-SLICE_RESULTS_PATH = "/mnt/s/ADNI_POST_PROCESS_MODELED_SLICE"
+DATA_RESULTS_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/"
+SLICE_RESULTS_PATH = "/tmp/slices"
 
-SLICE_MODEL_PATH = "/mnt/s/slice_extraction_model.h5"
+SLICE_MODEL_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/models/SLICE_EXTRACTOR_MODEL/slice-extraction-model.h5"
 
 IMAGE_SIZE = [200, 200]
 
