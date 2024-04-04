@@ -18,9 +18,9 @@ def plot_survey_bars():
     data = {
         'Question': [
             'How valuable do you think\nCogniCheck and similar AI\nsystems could be in Healthcare?',
-            'How successfully do the\ngenerated visualisations\nexplain the decisions made\nby the AIbehind a diagnosis?',
-            'How easy is the system\nto use and navigate?',
-            """As a whole, how do\n you rate the system?"""
+            "How successfully do the attention map visualisations\nexplain reasoning behind a diagnosis?",
+            'How easy is the system to use and navigate?',
+            "As a whole, how do you rate the system?"
         ],
         'Average Response (1-10)': [8, 7.5, 9, 9.5]
     }
@@ -32,10 +32,10 @@ def plot_survey_bars():
     #         'Understandable AI diagnoses',
     #         'Intuitive system',
     #         'Customisability and user profiles',
-    #         'System Compatibility with\ntablets & mobile devices',
+    #         'System Compatibility with tablets & mobile devices',
     #         'Collaborative features'
     #     ],
-    #     'Average Importance (1-10)': [8.75, 9.5, 8.5, 7, 4.5, 7, 7]
+    #     'Average Response (1-10)': [8.75, 9.5, 8.5, 7, 4.5, 7, 7]
     # }
 
     df = pd.DataFrame(data)
@@ -44,26 +44,30 @@ def plot_survey_bars():
     ratings = df['Average Response (1-10)']
 
     # Plotting
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(18, 6))
 
     # Define colors
     colors = ['#1f77b4', '#4d88ff', '#99bbff', "#ff7f0e"]
 
-    ax.barh(questions, ratings, color=colors)  # Use barh for horizontal bars
+    # Use barh for horizontal bars
+    ax.barh(questions, ratings, color=colors)
 
-    ax.set_xlabel("Average Response (1-10)")  # Change to xlabel
+    ax.set_xlabel("Average Response (1-10)", fontsize=20)  # Change to xlabel
     ax.set_xlim(xmin=0, xmax=10)  # Change to xlim
     ax.grid(axis='x', linestyle='--', alpha=0.7)  # Change to x-axis grid
+
+    # Adjust the font size of tick labels
+    ax.tick_params(axis='y', which='major', labelsize=24)
 
     # Add labels
     for bar in ax.patches:
         ax.annotate("{:.1f}".format(bar.get_width()),
                     (bar.get_width(), bar.get_y() + bar.get_height() / 2),
-                    va='center', ha='left', color='black')  # Adjust position and alignment
+                    va='center', ha='left', color='black', fontsize=20)  # Adjust position and alignment
 
     # Add title
     ax.set_title(
-        'Results of End User Testing Survey', fontsize=20)
+        'Results of End User Testing Survey', fontsize=24)
 
     # Adjust layout
     fig.tight_layout()
@@ -124,32 +128,58 @@ def plot_bar(df):
 
 def plot_line(df):
     # Extract necessary columns
-    epochs = df['epoch']
+    epochs = df['Epoch']
 
-    results1 = accuracy = list(map(lambda x: x * 100, df['accuracy']))
-    results2 = df['loss']
-    results3 = accuracy = list(map(lambda x: x * 100, df['val_accuracy']))
-    results4 = df['val_loss']
+    results1 = list(map(lambda x: x * 100, df['densenet_accuracy']))
+    results2 = list(map(lambda x: x * 100, df['densenet_val_accuracy']))
+    results3 = df['densenet_loss']
+    results4 = df['densenet_val_loss']
+
+    results5 = list(map(lambda x: x * 100, df['resnet_accuracy']))
+    results6 = list(map(lambda x: x * 100, df['resnet_val_accuracy']))
+    results7 = df['resnet_loss']
+    results8 = df['resnet_val_loss']
+
+    results9 = list(map(lambda x: x * 100, df['inceptionnet_accuracy']))
+    results10 = list(map(lambda x: x * 100, df['inceptionnet_val_accuracy']))
+    results11 = df['inceptionnet_loss']
+    results12 = df['inceptionnet_val_loss']
+
+    results13 = list(map(lambda x: x * 100, df['cogninet_accuracy']))
+    results14 = list(map(lambda x: x * 100, df['cogninet_val_accuracy']))
+    results15 = df['cogninet_loss']
+    results16 = df['cogninet_val_loss']
+
+    results17 = list(map(lambda x: x * 100, df['vggnet_accuracy']))
+    results18 = list(map(lambda x: x * 100, df['vggnet_val_accuracy']))
+    results19 = df['vggnet_loss']
+    results20 = df['vggnet_val_loss']
 
     # Plotting
     fig, ax = plt.subplots(figsize=(8, 5))
 
-    ax.plot(epochs, results1, label='VGGNet19 Training Accuracy',
+    ax.plot(epochs, results2, label='DenseNet201 Validation Accuracy',
             marker='o', color='#1f77b4')
-    ax.plot(epochs, results3, label='VGGNet19 Validation Accuracu',
+    ax.plot(epochs, results6, label='ResNet50 Validation Accuracy',
+            marker='o', color='#79B473')
+    ax.plot(epochs, results10, label='InceptionNet V3 Validation Accuracy',
+            marker='o', color='#EB5E55')
+    # ax.plot(epochs, results15, label='CogniNet Training Loss',
+    #         marker='o', color='#79B473')
+    ax.plot(epochs, results18, label='VGGNet19 Validation Accuracy',
             marker='o', color='#ff7f0e')
 
-    ax.set_ylabel("Accuracy")
+    ax.set_ylabel("Validation Accuracy")
     # ax.set_ylim(ymin=0.8, ymax=1)
     # ax.set_xlim(xmin=1, xmax=10)
     ax.set_xlabel("Epoch")
 
     # Add legend
-    ax.legend(loc="upper right")
+    ax.legend(loc="lower right")
 
     # Add title
     plt.title(
-        'Training and Validation Accuracy of VGGNet19', fontsize=16)
+        'Validation Accuracy of Baseline Deep Learning Models', fontsize=16)
 
     # Adjust layout
     fig.tight_layout()
@@ -205,3 +235,11 @@ def plot_full_bars():
     plt.xlabel('Pooling Method - Loss Function')
     plt.ylabel('Optimiser')
     plt.savefig("full.png", bbox_inches='tight', dpi=300)
+
+
+if __name__ == "__main__":
+    df = pd.read_excel(
+        "/home/white/uni_workspace/ecm3401-dissertation/data/All Modesl Training.xlsx")
+    plot_line(df)
+
+    # plot_survey_bars()
