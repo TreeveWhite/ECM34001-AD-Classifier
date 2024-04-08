@@ -3,12 +3,12 @@ import os
 
 def delete_files(directory):
     files = os.listdir(directory)
-    files.sort()  # Sort files alphabetically
+    files.sort()
     count = 0
 
     for file in files:
         count += 1
-        if count % 5 != 1:  # Keep every 5th file, delete others
+        if count % 5 != 1:
             file_path = os.path.join(directory, file)
             os.remove(file_path)
             print(f"Deleted: {file_path}")

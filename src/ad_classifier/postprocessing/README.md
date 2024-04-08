@@ -1,6 +1,6 @@
 # Post Processing
 
-The files within this directory as used as postprocessing once models have been used. Specifically, the generation of attention maps to serve as explainable AI visulisations.
+The files within this directory contain the code relating to the generation of attention maps to serve as explainable AI visulisations.
 
 ## attention_maps.py
 

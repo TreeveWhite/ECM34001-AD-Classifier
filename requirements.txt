@@ -84,3 +84,4 @@ urllib3==2.1.0
 wcwidth==0.2.12
 Werkzeug==3.0.1
 wrapt==1.14.1
+ad-classifier @ git+https://treevewhite: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@github.com/TreeveWhite/ECM34001-AD-Classifier.git@main
