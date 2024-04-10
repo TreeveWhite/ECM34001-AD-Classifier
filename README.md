@@ -10,7 +10,7 @@ The ad_classifier package is accessible using pip and then imported as a package
 
 To download the package use:
 
-`pip install ad-classifier @ git+https://treevewhite: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@github.com/TreeveWhite/ECM34001-AD-Classifier.git@main`
+`pip install ad-classifier @ git+https://treevewhite:<token>@github.com/TreeveWhite/ECM34001-AD-Classifier.git@main`
 
 Note this does require your shh key to validated.
 
