@@ -19,7 +19,7 @@ def get_activations_at(input_image, model):
     """
     final_activation_layer = None
     for layer in reversed(model.layers):
-        if "batch_normalization" in layer.name:
+        if "conv" in layer.name:
             final_activation_layer = layer
             break
     model = tf.keras.models.Model(
