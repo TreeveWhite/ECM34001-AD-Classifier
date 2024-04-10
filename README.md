@@ -1,6 +1,6 @@
 # ECM34001-AD-Classifier
 
-This is the reposiory which contains the code used to impliment the diagnostic deep learning models employed by CogniCheck.
+This reposiory contains the code used to impliment the diagnostic deep learning models employed by CogniCheck.
 
 Specifically, the ad_classifier package is used by CogniCheck to make predictions and interact with deep learning models.
 

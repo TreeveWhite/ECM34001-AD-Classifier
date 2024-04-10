@@ -1,3 +1,9 @@
+"""
+reorganise_dataset.py
+==============================================
+This file is a script used to split a dataset into separate testing and training
+datasets using stratified sampling of each diagnostic class.
+"""
 import os
 import random
 import shutil

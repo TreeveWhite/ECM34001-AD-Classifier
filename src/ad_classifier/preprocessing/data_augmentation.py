@@ -1,4 +1,16 @@
+"""
+data_augmentation.py
+==============================================
+This file contains teh logic which was used to augment both the diagnostic dataset
+of CV / MCI / pMCI / AD classes but also the relevent and non-relevent axial slices
+dataset. 
 
+Basic augmentation techniques were used including rotating and flipping.
+
+The code in this file was deisgned to be used as from the command line with paramarers
+such as what classes to augment and the number of files to augment up to being command
+line arguments.
+"""
 import os
 import sys
 from PIL import Image
@@ -45,7 +57,6 @@ def create_augmented_data(class_path, target_num_images):
 
 
 if __name__ == "__main__":
-
     args = sys.argv[1:]
 
     target_classes = [c for c in args if c in CLASSES]

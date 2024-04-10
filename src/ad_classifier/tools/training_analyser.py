@@ -1,10 +1,21 @@
+"""
+training_analyser.py
+==============================================
+This file contains a script which uses regex to extract training metrics from the
+logs oroduced when traing deep learning models to enable them to be easily compared.
+
+The metrics are extracted per epoch and saved in a table to an excel file.
+"""
 import re
 import sys
 import pandas as pd
-from matplotlib import pyplot as plt
 
 
 def extract_data(log_file):
+    """
+    Extract the metrics into a format which can be easily interpreted.
+    Coverts from logs to a dictionary of epochs which map onto a dictionary of metrics.
+    """
     with open(log_file, "r") as f:
         extracted_logs = {1: []}
         curr_epoch = 1
@@ -27,6 +38,9 @@ def extract_data(log_file):
 
 
 def save_data(data, metrics=["accuracy", "loss", "val_loss", "val_accuracy"]):
+    """
+    Saves the metrics data to an excel table.
+    """
     # Dictionary to hold all y_values for each metric
     all_y_values = {metric: [] for metric in metrics}
 

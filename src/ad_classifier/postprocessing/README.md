@@ -4,4 +4,4 @@ The files within this directory contain the code relating to the generation of a
 
 ## attention_maps.py
 
-This file contains the Grad-CAM implimentation ued to map heatmaps of model graident weights ontop of input images.
+This file contains the Grad-CAM implimentation used to map heatmaps of model graident weights ontop of input images.

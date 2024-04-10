@@ -1,3 +1,12 @@
+"""
+input_to_npy.py
+==============================================
+This file contains the frist stage of preprocessing which converts a MRI scan
+(collection of DICOM files) into a 3D matrix which is saved as a NumPy file.
+
+Metadata is used to organise the MRI scans based on their ID into the relevent
+diagnostic classes.
+"""
 import os
 import pydicom as dicom
 import numpy as np
@@ -10,12 +19,19 @@ METADATA_PATH = "/home/white/uni_workspace/ecm3401-dissertation/data/MPRAGE__CN_
 
 
 def load_metadata(csv_path, columns=["Subject", "Group"]):
+    """
+    Reads and organises the metdata relating to the diagnostic class of different
+    Subects (patients).
+    """
     df = pd.read_csv(csv_path, index_col="Image Data ID")
     df.replace({"EMCI": "MCI", "SMC": "MCI", "LMCI": "pMCI"}, inplace=True)
     return df[columns]
 
 
 def make_classes_folders(parent_dir, classes):
+    """
+    Creates folders for each diagnostic classification.
+    """
     for _class in classes:
         group_path = os.path.join(
             parent_dir, _class)
@@ -23,12 +39,18 @@ def make_classes_folders(parent_dir, classes):
 
 
 def load_dicom_series(dicom_files):
+    """
+    Reads in the data from a collection of DICOM files into an array.
+    """
     dicom_files.sort()
     slices = [dicom.read_file(file) for file in dicom_files]
     return slices
 
 
 def filter_order_slices(slices):
+    """
+    Removes unlabeled slices and orders them based on their slice location.
+    """
     resp = []
     skipcount = 0
     for s in slices:
@@ -43,6 +65,11 @@ def filter_order_slices(slices):
 
 
 def extract_3dimg(dcm_files):
+    """
+    This function is what reads the DICOM files and using metadata of the first
+    slice determines the aquisition protocol and then builds the 3D matrix accordingly.
+    This function returns the 3D matrix of the complete MRI scan.
+    """
     if len(dcm_files) < 5:
         print(f"WARNING: Not enough dcm slices")
         return None
@@ -71,9 +98,14 @@ def extract_3dimg(dcm_files):
 
 
 def dataset_to_3dimg(metadata, dataset_path, results_path):
-    # Create new folders in Results Path for the Classes
+    """
+    Takes a database of MRI images per subject (patient) and turns it into a dataset
+    of 3D matricies per diagnostic class this project focuses on. 
+    """
+    # Create new folders in Results Path for each of the Classes
     make_classes_folders(results_path, metadata["Group"].unique())
 
+    # Walk the MRI scan database processing each MRI scan in turn.
     for root, _, files in os.walk(dataset_path):
         image_id = os.path.basename(root)
         if image_id in metadata.index:
@@ -93,7 +125,6 @@ def dataset_to_3dimg(metadata, dataset_path, results_path):
 
 
 if __name__ == "__main__":
-
     metadata = load_metadata(METADATA_PATH)
 
     os.makedirs(DATA_RESULTS_PATH, exist_ok=True)

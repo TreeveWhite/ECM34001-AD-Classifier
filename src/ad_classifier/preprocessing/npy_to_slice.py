@@ -1,3 +1,12 @@
+"""
+npy_to_slice.py
+==============================================
+This file contains the second stage of preprocessing which takes a dataset of 3D matricies
+representing full MRI scans and extracts the axial slices, then filters out to only include
+the relevent axial slices from each MRI scan.
+These relevent axial slices are then placed in a new dataset organised again by diagnostic
+classification.
+"""
 import os
 import sys
 import cv2
@@ -20,12 +29,20 @@ IMAGE_SIZE = [200, 200]
 
 
 def load_metadata(csv_path, columns=["Subject", "Group"]):
+    """
+    Reads and organises the metdata relating to the diagnostic class of different
+    Subects (patients).
+    """
     df = pd.read_csv(csv_path, index_col="Image Data ID")
     df.replace({"EMCI": "MCI", "SMC": "MCI", "LMCI": "pMCI"}, inplace=True)
     return df[columns]
 
 
 def show_image(title, img, ctype, show):
+    """
+    USE IN DEBUGGING
+    This procedure is used to shown an image at any stage of the preprocessing.
+    """
     if show:
         plt.figure(figsize=(10, 10))
         if ctype == 'bgr':
@@ -47,6 +64,9 @@ def show_image(title, img, ctype, show):
 
 
 def make_classes_folders(parent_dir, classes):
+    """
+    Creates folders for each diagnostic classification.
+    """
     for _class in classes:
         group_path = os.path.join(
             parent_dir, _class)
@@ -54,6 +74,11 @@ def make_classes_folders(parent_dir, classes):
 
 
 def extract_brain(img_slice, denoise=True):
+    """
+    This process is used to perform skull stripping using Otsu's Method.
+
+    Denoising is also performed if it is set.
+    """
     # Apply Otsu's automatic thresholding
     ret, thresh = cv2.threshold(
         img_slice, 0, 255, cv2.THRESH_OTSU)
@@ -77,6 +102,10 @@ def extract_brain(img_slice, denoise=True):
 
 
 def slice_to_img(data):
+    """
+    This process is used to convert the data extracted from the 3D matrix into
+    an image.
+    """
     img_slice_normalized = (
         data - np.min(data)) / (np.max(data) - np.min(data))
     img_slice_uint8 = (
@@ -86,6 +115,18 @@ def slice_to_img(data):
 
 
 def get_slices(img3d, slice_model):
+    """
+    This prodecure is used to extract and determine what the relevent axial slices
+    are within an MRI scan. The procedure uses the slice relevence deep learning
+    model.
+
+    Slices deemed relevent with 100% confidence are automatically collected, however
+    if no slices are deemed relevent with 100% confidence then the next 3 slices deemed
+    relevent with the highest confidence are selected. If no slices are deemed relevent
+    with a confidence of at least 50% then an error is raised.
+
+    These relevent axial slices are then preprocessed and returned.
+    """
     # Define Desired Slice Indexes
     slice_indexes = range(
         round(img3d.shape[0]*0.2), round(img3d.shape[0]*0.8))
@@ -122,6 +163,10 @@ def get_slices(img3d, slice_model):
 
 
 def npy_dataset_to_slice(data_path, results_path, denoise, show, slice_model):
+    """
+    This is the process used to create a dataset of relevent axial slices from a
+    dataset of NumPy files representing full MRI scans.  
+    """
     for root, _, files in os.walk(data_path):
         class_name = os.path.basename(root)
 
@@ -131,6 +176,7 @@ def npy_dataset_to_slice(data_path, results_path, denoise, show, slice_model):
 
             scan_id = npy_file.split('.')[0]
 
+            # Log Current MRI Scan ID
             print(scan_id)
 
             save_path = os.path.join(os.path.join(

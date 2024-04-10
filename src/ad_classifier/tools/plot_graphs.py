@@ -1,45 +1,28 @@
-from matplotlib import rc
+"""
+plot_graphs.py
+==============================================
+This file is used to create all the charts used by the project.
+"""
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib_inline.backend_inline import set_matplotlib_formats
-import matplotlib as mpl
 
+# Define custo style
 plt.style.use('seaborn-v0_8-darkgrid')
-font = {'size': 16}
-mpl.rc('font', **font)
-rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
-
 set_matplotlib_formats('retina', quality=1000)
 
 
-def plot_survey_bars():
-    data = {
-        'Question': [
-            'How valuable do you think\nCogniCheck and similar AI\nsystems could be in Healthcare?',
-            "How successfully do the attention map visualisations\nexplain reasoning behind a diagnosis?",
-            'How easy is the system to use and navigate?',
-            "As a whole, how do you rate the system?"
-        ],
-        'Average Response (1-10)': [8, 7.5, 9, 9.5]
-    }
-
-    # data = {
-    #     'Question': [
-    #         'Ease of use',
-    #         'Clear diagnoses and results',
-    #         'Understandable AI diagnoses',
-    #         'Intuitive system',
-    #         'Customisability and user profiles',
-    #         'System Compatibility with tablets & mobile devices',
-    #         'Collaborative features'
-    #     ],
-    #     'Average Response (1-10)': [8.75, 9.5, 8.5, 7, 4.5, 7, 7]
-    # }
-
+def plot_survey_bars(data):
+    """
+    Plot a horizontal Bar Chart.
+    This type of chart was used to represent the quantative results of the
+    surveys which the project performed.
+    """
     df = pd.DataFrame(data)
-   # Extract necessary columns
+
+    # Extract necessary columns
     questions = df['Question']
     ratings = df['Average Response (1-10)']
 
@@ -75,6 +58,11 @@ def plot_survey_bars():
 
 
 def plot_bar(df):
+    """
+    Plot a verticle bar chart.
+    This function was use to plot verticle bar charts, specifically used by this
+    project to plot the testing metrics of the deep learning models.
+    """
     # Extract necessary columns
     model_names = df['Model Name']
     accuracy = df['Accuracy']
@@ -82,10 +70,11 @@ def plot_bar(df):
     sensitivity = df['Sensitivity']
     f1_score = df['F1 Score']
 
+    # Convert to a Percentage
     accuracy = list(map(lambda x: x * 100, accuracy))
 
     # Plotting
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
+    fig, ax1 = plt.subplots(figsize=(15, 5))
 
     # Define colors
     colors = ['#1f77b4', '#4d88ff', '#99bbff', '#cceeff', "#ff7f0e"]
@@ -109,24 +98,17 @@ def plot_bar(df):
     ax1.set_title(
         'Accuracy of Experimental Models during Testing', fontsize=16)
 
-    # Create a table
-    table_data = {
-        'Model Name': model_names,
-        'Sensitivity': sensitivity,
-        'Precision': precision,
-        'F1 Score': f1_score
-    }
-    ax2.axis('off')  # Hide axis
-    print(table_data.values())
-    ax2.table(cellText=list(table_data.values()),
-              colLabels=list(table_data.keys()), loc='center')
-
     # Adjust layout
     fig.tight_layout()
     fig.savefig("plotter.png", bbox_inches='tight', dpi=300)
 
 
 def plot_line(df):
+    """
+    Plot a line chart
+    This function was used to plot the training metrics of various deep learning
+    models.
+    """
     # Extract necessary columns
     epochs = df['Epoch']
 
@@ -164,14 +146,10 @@ def plot_line(df):
             marker='o', color='#79B473')
     ax.plot(epochs, results10, label='InceptionNet V3 Validation Accuracy',
             marker='o', color='#EB5E55')
-    # ax.plot(epochs, results15, label='CogniNet Training Loss',
-    #         marker='o', color='#79B473')
     ax.plot(epochs, results18, label='VGGNet19 Validation Accuracy',
             marker='o', color='#ff7f0e')
 
     ax.set_ylabel("Validation Accuracy")
-    # ax.set_ylim(ymin=0.8, ymax=1)
-    # ax.set_xlim(xmin=1, xmax=10)
     ax.set_xlabel("Epoch")
 
     # Add legend
@@ -184,10 +162,13 @@ def plot_line(df):
     # Adjust layout
     fig.tight_layout()
     fig.savefig("plotter.png", bbox_inches='tight', dpi=300)
-    plt.show()
 
 
 def plot_conf():
+    """
+    Plot a Confusion Matrix using Seaborn.
+    This function was used to plot model's confusion matricies.
+    """
     # Create a sample confusion matrix
     cm = np.array([[790, 3,  2,  5],
                    [7, 786,  5,  2],
@@ -208,7 +189,13 @@ def plot_conf():
     plt.savefig("conf.png")
 
 
-def plot_full_bars():
+def plot_testing_heatmap():
+    """
+    Plot a heatmap of testing metrics.
+    This fucntion was used to plot a heatmap of testing metrics from the 12
+    experimental models which were implimented as part of the development of CogniNet
+    exploring various hyper parameters.
+    """
     data = {
         'Optimizer': ['ADAM', 'ADAM', 'ADAM', 'ADAM', 'SDG', 'SDG', 'SDG', 'SDG', 'None', 'None', 'None', 'None'],
         'Loss Function': ['Sparse', 'Sparse', 'Categorical', 'Categorical', 'Sparse', 'Sparse', 'Categorical', 'Categorical', 'Sparse', 'Sparse', 'Categorical', 'Categorical'],
@@ -222,7 +209,6 @@ def plot_full_bars():
     # Convert data to DataFrame
     df = pd.DataFrame(data)
 
-    # Pivot the DataFrame to create a matrix of accuracies
     heatmap_data = df.pivot_table(values='F1 Score', index='Optimizer', columns=[
         'Pooling Method', 'Loss Function'])
 
@@ -235,11 +221,3 @@ def plot_full_bars():
     plt.xlabel('Pooling Method - Loss Function')
     plt.ylabel('Optimiser')
     plt.savefig("full.png", bbox_inches='tight', dpi=300)
-
-
-if __name__ == "__main__":
-    df = pd.read_excel(
-        "/home/white/uni_workspace/ecm3401-dissertation/data/All Modesl Training.xlsx")
-    plot_line(df)
-
-    # plot_survey_bars()
